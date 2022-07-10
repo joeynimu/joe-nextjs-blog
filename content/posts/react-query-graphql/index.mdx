@@ -1,0 +1,209 @@
+---
+title: Using React-Query with Graphql
+date: 2021-04-13
+description: We will look at using ReactQuery with Graphql based API's'
+tags:
+  - React
+  - Graphql
+---
+
+<p>
+  In this post, we will look at how you can use react-query with a graphql based
+  API.
+</p>
+<p>By the end, you will be able to;</p>
+
+- Install, and set up react-query.
+- Send a graphql request using the fetch API.
+- Use react-query to fetch data from a graphql API
+- Fetch some graphql jobs listing and display them
+
+<p>
+  Before we get started, you will need to have a react app that you will use. I
+  will use an app bootstrapped with CRA in this tutorial, but you can use any
+  React application; Nexjs, Gatsby, CRA, etc.
+</p>
+
+<p>Let's get started</p>
+
+##### Installing react-query and setting it up
+
+<p>We will install react-query by running;</p>
+
+```bash
+ $ yarn add react-query
+```
+
+<p>
+  Next, we need need to wrap our app with QueryClientProvider and provide a
+  queryClient instance
+</p>
+
+```jsx:title
+// index.js file
+
+import { StrictMode } from "react";
+import ReactDOM from "react-dom";
+
+import { QueryClient, QueryClientProvider } from "react-query";
+import App from "./App";
+
+const queryClient = new QueryClient();
+
+const rootElement = document.getElementById("root");
+ReactDOM.render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>,
+  rootElement
+);
+```
+
+<p>And with that, our app is now ready to use ReactQuery's hooks.</p>
+
+##### Making a Graphql request using fetch
+
+<p>
+  We will use the{" "}
+  <a href="https://api.graphql.jobs/" target="_blank" rel="noreferrer">
+    open graphql jobs API
+  </a>
+  as our backend, and to make the request, we will use the fetch API.
+</p>
+
+<p>
+  Below is a signature function of making a graphql request using fetch,
+  accepting a query, making the request, and returning the data.
+</p>
+
+```js
+const fetchData = async (query) => {
+  /* pass in a query string e.g
+    const query = `
+      query queryName{
+        ...
+      }
+    `
+  */
+  const API_URL = "https://api.graphql.jobs/"; // <-- your graphql API url
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query,
+    }),
+  });
+  const data = await res.json();
+  return data;
+};
+```
+
+Let's define a query string as below;
+
+```js
+const GRAPHQL_JOBS_QUERY = `
+  query JobsQuery{
+    jobs{
+      id
+      title
+      description
+    }
+  }
+`;
+```
+
+<p>
+  We will then modify our fetchData function slightly to return the correct data
+  key as below;
+</p>
+
+```js
+ ..
+ return data.data.jobs
+ ..
+```
+
+#### Using react-query to make a Graphql request
+
+<p>We will first import useQuery from react-query</p>
+
+```js
+import { useQuery } from "use-query";
+```
+
+<p>We can then pass our function to react-query's use-query hook.</p>
+
+```js
+const {
+  data: jobs = [],
+  isLoading,
+  isError,
+} = useQuery("graphql-jobs", async () => fetchData(GRAPHQL_JOBS_QUERY));
+```
+
+<p>We can then render some UI from the values we use-query gives us back.</p>
+
+```js
+function App() {
+  const {
+    data: jobs = [],
+    isLoading,
+    isError,
+  } = useQuery("graphql-jobs", async () => fetchData(GRAPHQL_JOBS_QUERY));
+  return (
+    <div className="App">
+      <h1>Graphql Jobs</h1>
+      {isLoading && <p>Fetching jobs...</p>}
+      {isError && <p>:( failed to fetch graphql jobs</p>}
+      <ul>
+        {jobs.map(({ id, title, description }) => (
+          <li key={id}>
+            <h3>{title}</h3>
+            <p>{description}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+<p>
+  And with that, we have a simple app that fetches graphql jobs and displays
+  them with the benefits that react-query offers, among them being;
+</p>
+
+- Caching
+- Deduping multiple requests for the same data into a single request
+- Updating out of date data in the background
+- Knowing when data is stale.
+- Reflecting updates to data as quickly as possible
+- Performance optimizations like pagination and lazy loading data
+- Managing memory and garbage collection of server state
+- Memoizing query results with structural sharing
+
+##### What next?
+
+<p>
+  If you are new to react-query, I highly suggest going through its{" "}
+  <a href="https://react-query.tanstack.com/" target="_blank" rel="noreferrer">
+    docs and examples
+  </a>
+  . It does offer a lot more than what I have shown on here.
+</p>
+<p>
+  If you are getting started with graphql, I'd recommend going through the{" "}
+  <a href="http://howtographql.com/" target="_blank" rel="noreferrer">
+    how-to graphql tutorial
+  </a>
+  .
+</p>
+
+<p>
+  After going through the above resources, the best way to better grasp what you
+  learn is by building something. So go ahead and build something.
+  <br />
+  Happy coding
+</p>
